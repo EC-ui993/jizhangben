@@ -194,7 +194,8 @@ body {
 
 /* 禁止浏览器长按弹出菜单（为自定义拖拽让路） */
 .category-item,
-.category-card {
+.category-card,
+.expense-item {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
