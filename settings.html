@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚙️ 设置</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+</head>
+<body>
+
+  <!-- ==================== 应用主体 ==================== -->
+  <div class="app-container" id="app">
+
+    <!-- 主内容区 -->
+    <div class="content" id="content"></div>
+
+    <!-- 底部导航菜单栏 -->
+    <nav class="bottom-nav">
+      <a class="nav-tab" href="record.html">
+        <span class="nav-icon">📝</span>
+        <span>记账</span>
+      </a>
+      <a class="nav-tab" href="categories.html">
+        <span class="nav-icon">📂</span>
+        <span>项目管理</span>
+      </a>
+      <a class="nav-tab active" href="settings.html">
+        <span class="nav-icon">⚙️</span>
+        <span>设置</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 共享数据层 -->
+  <script src="data.js"></script>
+
+  <script>
+    /* ===================================================================
+       设置页特有逻辑：预算设定、数据统计、导入导出
+       =================================================================== */
+
+    // ---- 页面渲染 ----
+
+    function renderPage() {
+      renderSettingsTab();
+    }
+
+    function renderSettingsTab() {
+      const content = document.getElementById('content');
+      const totalAll = calcTotal(expenses);
+      const thisMonth = expenses.filter(e => isDateInPeriod(e.date, 'month', new Date()));
+      const monthTotal = calcTotal(thisMonth);
+
+      let html = '<div class="settings-section">';
+
+      // 月度预算设定
+      html += `
+        <div class="setting-card">
+          <label>💰 月度预算（元）</label>
+          <input type="number" id="inputBudget" value="${monthlyBudget || ''}" placeholder="例如：2000" step="0.01" min="0">
+          <div style="margin-top:8px;font-size:12px;color:var(--text-muted);">
+            本月已支出 <strong style="color:${monthTotal > monthlyBudget && monthlyBudget > 0 ? 'var(--danger)' : 'var(--text)'};">${formatMoney(monthTotal)}</strong>
+            ${monthlyBudget > 0 ? ' / 预算 ' + formatMoney(monthlyBudget) : ''}
+            ${monthlyBudget > 0 && monthTotal > monthlyBudget ? ' ⚠️ 已超预算！' : ''}
+          </div>
+        </div>`;
+
+      // 数据统计
+      html += `
+        <div class="setting-card">
+          <label>📊 数据统计</label>
+          <div style="font-size:14px;line-height:2;">
+            <div>总支出记录：<strong>${expenses.length}</strong> 笔</div>
+            <div>累计支出：<strong>${formatMoney(totalAll)}</strong></div>
+            <div>支出分类：<strong>${categories.length}</strong> 个</div>
+            <div>本月支出：<strong>${formatMoney(monthTotal)}</strong></div>
+          </div>
+        </div>`;
+
+      // 数据管理操作
+      html += `
+        <div class="setting-card">
+          <label>🛠️ 数据管理</label>
+          <button class="btn-secondary" id="btnExport">📋 复制数据到剪贴板</button>
+          <button class="btn-danger" id="btnClear" style="margin-top:10px;">⚠️ 清除所有数据</button>
+        </div>`;
+
+      // 关于
+      html += `
+        <div class="about-text">
+          💰 记账本 v1.0<br>
+          一个简单实用的个人记账工具<br>
+          数据保存在浏览器本地，安全可靠
+        </div>`;
+
+      html += '</div>';
+      content.innerHTML = html;
+
+      // 绑定设置页面特有事件
+      document.getElementById('inputBudget').addEventListener('change', function() {
+        monthlyBudget = parseFloat(this.value) || 0;
+        saveBudget();
+        showToast('月度预算已更新');
+      });
+
+      document.getElementById('btnExport').addEventListener('click', exportData);
+      document.getElementById('btnClear').addEventListener('click', clearAllData);
+    }
+
+    // ---- 数据操作 ----
+
+    function clearAllData() {
+      if (!confirm('⚠️ 确定要清除所有数据吗？\n\n这将删除所有支出记录和自定义分类，恢复为默认状态。\n\n此操作不可恢复！')) return;
+      if (!confirm('再次确认：真的要清除所有数据吗？')) return;
+
+      localStorage.removeItem(KEY_CATEGORIES);
+      localStorage.removeItem(KEY_EXPENSES);
+      categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+      expenses = [];
+      saveCategories();
+      saveExpenses();
+      renderPage();
+      showToast('所有数据已清除');
+    }
+
+    function exportData() {
+      const data = {
+        exportTime: new Date().toLocaleString(),
+        categories: categories,
+        expenses: expenses,
+        budget: monthlyBudget,
+      };
+      const text = JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('数据已复制到剪贴板 📋');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('数据已复制到剪贴板 📋');
+      });
+    }
+
+    // ---- 启动 ----
+
+    function init() {
+      loadData();
+      renderPage();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    console.log('⚙️ 设置页面已就绪！');
+  </script>
+</body>
+</html>

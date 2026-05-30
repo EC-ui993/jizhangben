@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📂 项目管理</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+</head>
+<body>
+
+  <!-- ==================== 应用主体 ==================== -->
+  <div class="app-container" id="app">
+
+    <!-- 主内容区 -->
+    <div class="content" id="content"></div>
+
+    <!-- 底部导航菜单栏 -->
+    <nav class="bottom-nav">
+      <a class="nav-tab" href="record.html">
+        <span class="nav-icon">📝</span>
+        <span>记账</span>
+      </a>
+      <a class="nav-tab active" href="categories.html">
+        <span class="nav-icon">📂</span>
+        <span>项目管理</span>
+      </a>
+      <a class="nav-tab" href="settings.html">
+        <span class="nav-icon">⚙️</span>
+        <span>设置</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ==================== 分类编辑弹窗 ==================== -->
+  <div class="modal-overlay hidden" id="categoryModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="categoryModalTitle">添加分类</div>
+
+      <div class="modal-field">
+        <label>选择图标</label>
+        <div class="emoji-picker" id="emojiPicker"></div>
+      </div>
+
+      <div class="modal-field">
+        <label>分类名称</label>
+        <input type="text" id="modalCatNameInput" placeholder="例如：午饭、交通、购物">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancelCategory">取消</button>
+        <button class="btn-primary" id="btnSaveCategory">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 共享数据层 -->
+  <script src="data.js"></script>
+
+  <script>
+    /* ===================================================================
+       项目管理页特有逻辑：分类列表渲染、分类弹窗
+       =================================================================== */
+
+    // ---- 页面状态 ----
+    let editingCategoryId = null;
+
+    // ---- 页面渲染 ----
+
+    function renderPage() {
+      renderCategoriesTab();
+    }
+
+    function renderCategoriesTab() {
+      const content = document.getElementById('content');
+      let html = '<div class="category-list">';
+      html += '<div class="section-title">📂 管理支出分类</div>';
+
+      if (categories.length === 0) {
+        html += '<div class="empty-state"><div class="icon">📭</div><div class="text">还没有分类，点击下方按钮添加</div></div>';
+      } else {
+        categories.forEach(cat => {
+          const count = expenses.filter(e => e.categoryId == cat.id).length;
+          html += `
+            <div class="category-card">
+              <span class="cat-emoji">${cat.emoji}</span>
+              <div class="cat-info">
+                <div class="cat-name">${cat.name}</div>
+                <div class="cat-count">${count} 条记录</div>
+              </div>
+              <div class="cat-actions">
+                <button class="btn-icon" data-action="edit-category" data-category-id="${cat.id}" title="编辑">✏️</button>
+                <button class="btn-icon danger" data-action="delete-category" data-category-id="${cat.id}" title="删除">🗑</button>
+              </div>
+            </div>`;
+        });
+      }
+
+      html += `
+        <button class="btn-add" data-action="add-category">
+          ＋ 添加新分类
+        </button>`;
+      html += '</div>';
+
+      content.innerHTML = html;
+    }
+
+    // ---- 分类弹窗 ----
+
+    function showCategoryModal(categoryId) {
+      editingCategoryId = categoryId;
+      const cat = categoryId ? findCategory(categoryId) : null;
+
+      document.getElementById('categoryModalTitle').textContent = cat ? '编辑分类' : '添加分类';
+      document.getElementById('modalCatNameInput').value = cat ? cat.name : '';
+
+      const picker = document.getElementById('emojiPicker');
+      let emojiHtml = '';
+      EMOJI_LIST.forEach(emoji => {
+        const selected = cat && cat.emoji === emoji ? ' selected' : '';
+        emojiHtml += `<button class="emoji-option${selected}" data-emoji="${emoji}">${emoji}</button>`;
+      });
+      picker.innerHTML = emojiHtml;
+
+      document.getElementById('categoryModal').classList.remove('hidden');
+    }
+
+    function hideCategoryModal() {
+      document.getElementById('categoryModal').classList.add('hidden');
+      editingCategoryId = null;
+    }
+
+    function saveCategoryFromModal() {
+      const name = document.getElementById('modalCatNameInput').value.trim();
+      const selectedEmoji = document.querySelector('.emoji-option.selected');
+      const emoji = selectedEmoji ? selectedEmoji.dataset.emoji : '📌';
+
+      if (!name) { showToast('请输入分类名称'); return; }
+
+      if (editingCategoryId) {
+        const cat = findCategory(editingCategoryId);
+        if (cat) {
+          cat.name = name;
+          cat.emoji = emoji;
+          // 同步更新所有使用该分类的支出记录
+          expenses.forEach(e => {
+            if (e.categoryId == cat.id) {
+              e.categoryName = name;
+              e.categoryEmoji = emoji;
+            }
+          });
+          saveExpenses();
+        }
+      } else {
+        categories.push({
+          id: generateId(),
+          name: name,
+          emoji: emoji,
+        });
+      }
+
+      saveCategories();
+      hideCategoryModal();
+      renderPage();
+      showToast(editingCategoryId ? '分类已更新 ✓' : '分类已添加 ✓');
+    }
+
+    // ---- 数据操作 ----
+
+    function deleteCategory(categoryId) {
+      const cat = findCategory(categoryId);
+      if (!cat) return;
+
+      const count = expenses.filter(e => e.categoryId == categoryId).length;
+      let msg = `确定要删除「${cat.emoji} ${cat.name}」分类吗？`;
+      if (count > 0) {
+        msg += `\n\n该分类下有 ${count} 条支出记录，删除后这些记录仍会保留。`;
+      }
+
+      if (!confirm(msg)) return;
+
+      categories = categories.filter(c => c.id != categoryId);
+      saveCategories();
+      renderPage();
+      showToast('分类已删除');
+    }
+
+    // ---- 事件绑定 ----
+
+    function init() {
+      loadData();
+      renderPage();
+
+      // 内容区事件委托
+      document.getElementById('content').addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.dataset.action;
+
+        if (action === 'edit-category') {
+          showCategoryModal(target.dataset.categoryId);
+        } else if (action === 'delete-category') {
+          deleteCategory(target.dataset.categoryId);
+        } else if (action === 'add-category') {
+          showCategoryModal(null);
+        }
+      });
+
+      // 分类弹窗
+      document.getElementById('btnSaveCategory').addEventListener('click', saveCategoryFromModal);
+      document.getElementById('btnCancelCategory').addEventListener('click', hideCategoryModal);
+      document.getElementById('categoryModal').addEventListener('click', function(e) {
+        if (e.target === this) hideCategoryModal();
+      });
+      document.getElementById('emojiPicker').addEventListener('click', function(e) {
+        const btn = e.target.closest('.emoji-option');
+        if (!btn) return;
+        this.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    console.log('📂 项目管理页面已就绪！');
+  </script>
+</body>
+</html>

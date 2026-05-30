@@ -1,0 +1,20 @@
+{
+  "name": "记账本",
+  "short_name": "记账本",
+  "description": "一个简单实用的个人记账工具",
+  "start_url": "/record.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#6366F1",
+  "background_color": "#F0F2F5",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
