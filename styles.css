@@ -69,6 +69,17 @@ body {
   transition: all 0.2s;
 }
 
+.period-title-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.period-title-group #btnNext {
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
 .period-nav button:hover { background: var(--bg); }
 
 .period-title {
