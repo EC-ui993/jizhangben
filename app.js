@@ -13,12 +13,12 @@ const KEY_EXPENSES = 'jzb_expenses';
 const KEY_BUDGET = 'jzb_budget';
 
 const EMOJI_LIST = [
-  '🍚','🍜','🍞','☕','🍵','🍔','🍕','🥗',
-  '🚌','🚇','🚗','🚲','⛽','🅿️',
-  '🛒','👗','👟','💄','🎁','📦',
-  '🎮','🎬','🎵','📚','🎯','⚽',
-  '🏠','💡','💧','🔌','📱','💻',
-  '💊','🏥','🐱','🐶','✂️','📌',
+  '🍚', '🍜', '🍞', '☕', '🍵', '🍔', '🍕', '🥗',
+  '🚌', '🚇', '🚗', '🚲', '⛽', '🅿️',
+  '🛒', '👗', '👟', '💄', '🎁', '📦',
+  '🎮', '🎬', '🎵', '📚', '🎯', '⚽',
+  '🏠', '💡', '💧', '🔌', '📱', '💻',
+  '💊', '🏥', '🐱', '🐶', '✂️', '📌',
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -33,21 +33,21 @@ const DEFAULT_CATEGORIES = [
 ];
 
 // ==================== 响应式 Store ====================
-
+//初始化
 const store = reactive({
   categories: [],
   expenses: [],
   monthlyBudget: 0,
 });
-
+//上传数据(42-61)
 function loadData() {
   try {
     store.categories = JSON.parse(localStorage.getItem(KEY_CATEGORIES));
-    store.expenses   = JSON.parse(localStorage.getItem(KEY_EXPENSES));
+    store.expenses = JSON.parse(localStorage.getItem(KEY_EXPENSES));
     store.monthlyBudget = parseFloat(localStorage.getItem(KEY_BUDGET)) || 0;
   } catch (e) { store.categories = null; store.expenses = null; }
-  if (!store.categories || !Array.isArray(store.categories) || store.categories.length === 0) {
-    store.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+  if (!store.categories || !Array.isArray(store.categories) || store.categories.length === 0) { //缺少数据 / 数据坏了 / 数据空了 → 用默认分类顶上
+    store.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)); //防止污染默认数组
     saveCategories();
   }
   if (!store.expenses || !Array.isArray(store.expenses)) {
@@ -57,13 +57,13 @@ function loadData() {
 }
 
 function saveCategories() { localStorage.setItem(KEY_CATEGORIES, JSON.stringify(store.categories)); }
-function saveExpenses()   { localStorage.setItem(KEY_EXPENSES, JSON.stringify(store.expenses)); }
-function saveBudget()     { localStorage.setItem(KEY_BUDGET, store.monthlyBudget); }
+function saveExpenses() { localStorage.setItem(KEY_EXPENSES, JSON.stringify(store.expenses)); }
+function saveBudget() { localStorage.setItem(KEY_BUDGET, store.monthlyBudget); }
 
-function findCategory(id) { return store.categories.find(c => c.id == id); }
+function findCategory(id) { return store.categories.find(c => c.id == id); } //对于每个分类 c，检查它的 id 是否等于要找的 id
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 7); }
-
-const sortedCategories = computed(() => {
+//筛选，不是"其他"的放前面，"其他"放最后
+const sortedCategories = computed(() => { //computed：vue的函数，store.categories变了，它才重新计算
   const others = store.categories.filter(c => c.name === '其他');
   const rest = store.categories.filter(c => c.name !== '其他');
   return [...rest, ...others];
@@ -103,23 +103,23 @@ function formatDate(date) {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
-function parseDate(str) { const [y,m,d]=str.split('-').map(Number); return new Date(y,m-1,d); }
+function parseDate(str) { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); }
 function getTodayStr() { return formatDate(new Date()); }
 function getWeekStart(date) {
   const d = new Date(date); const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d;
+  d.setDate(d.getDate() + diff); d.setHours(0, 0, 0, 0); return d;
 }
-function getWeekEnd(date) { const s=getWeekStart(date); const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return e; }
+function getWeekEnd(date) { const s = getWeekStart(date); const e = new Date(s); e.setDate(e.getDate() + 6); e.setHours(23, 59, 59, 999); return e; }
 function isDateInPeriod(dateStr, period, anchorDate) {
-  const d=parseDate(dateStr), a=new Date(anchorDate);
-  if (period==='day') return formatDate(d)===formatDate(a);
-  if (period==='week') { const ws=getWeekStart(a),we=getWeekEnd(a); return d>=ws&&d<=we; }
-  return d.getFullYear()===a.getFullYear()&&d.getMonth()===a.getMonth();
+  const d = parseDate(dateStr), a = new Date(anchorDate);
+  if (period === 'day') return formatDate(d) === formatDate(a);
+  if (period === 'week') { const ws = getWeekStart(a), we = getWeekEnd(a); return d >= ws && d <= we; }
+  return d.getFullYear() === a.getFullYear() && d.getMonth() === a.getMonth();
 }
-function getExpensesInPeriod(period, anchorDate) { return store.expenses.filter(e=>isDateInPeriod(e.date,period,anchorDate)); }
-function calcTotal(list) { return list.reduce((s,e)=>s+e.amount,0); }
-function formatMoney(v) { return '¥'+v.toFixed(2); }
-function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+function getExpensesInPeriod(period, anchorDate) { return store.expenses.filter(e => isDateInPeriod(e.date, period, anchorDate)); }
+function calcTotal(list) { return list.reduce((s, e) => s + e.amount, 0); }
+function formatMoney(v) { return '¥' + v.toFixed(2); }
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 // ==================== 全局 Toast ====================
 
@@ -206,15 +206,15 @@ const ExpenseModal = {
       const v = parseFloat(amount.value);
       if (isNaN(v) || v < 0) { showToast('请输入有效的金额'); return; }
       if (!date.value) { showToast('请选择日期'); return; }
-      const cat = findCategory(props.expenseId ? store.expenses.find(e=>e.id==props.expenseId)?.categoryId : props.categoryId);
+      const cat = findCategory(props.expenseId ? store.expenses.find(e => e.id == props.expenseId)?.categoryId : props.categoryId);
       if (!cat) { showToast('分类不存在'); return; }
       const amt = Math.round(v * 100) / 100;
 
       if (props.expenseId) {
         const exp = store.expenses.find(e => e.id == props.expenseId);
-        if (exp) { exp.categoryId=cat.id; exp.categoryName=cat.name; exp.categoryEmoji=cat.emoji; exp.amount=amt; exp.date=date.value; exp.note=note.value.trim(); }
+        if (exp) { exp.categoryId = cat.id; exp.categoryName = cat.name; exp.categoryEmoji = cat.emoji; exp.amount = amt; exp.date = date.value; exp.note = note.value.trim(); }
       } else {
-        store.expenses.push({ id:generateId(), categoryId:cat.id, categoryName:cat.name, categoryEmoji:cat.emoji, amount:amt, date:date.value, note:note.value.trim() });
+        store.expenses.push({ id: generateId(), categoryId: cat.id, categoryName: cat.name, categoryEmoji: cat.emoji, amount: amt, date: date.value, note: note.value.trim() });
       }
       saveExpenses();
       emit('close');
@@ -349,9 +349,9 @@ const RecordView = {
         return cur;
       } else if (currentPeriod.value === 'week') {
         const ws = getWeekStart(currentDate.value), we = getWeekEnd(currentDate.value);
-        return `${ws.getMonth()+1}月${ws.getDate()}日 - ${we.getMonth()+1}月${we.getDate()}日`;
+        return `${ws.getMonth() + 1}月${ws.getDate()}日 - ${we.getMonth() + 1}月${we.getDate()}日`;
       }
-      return currentDate.value.getFullYear()+'年'+(currentDate.value.getMonth()+1)+'月';
+      return currentDate.value.getFullYear() + '年' + (currentDate.value.getMonth() + 1) + '月';
     });
 
     const isToday = computed(() => currentPeriod.value === 'day' && formatDate(currentDate.value) === getTodayStr());
@@ -363,15 +363,15 @@ const RecordView = {
     const groupedExpenses = computed(() => {
       const g = {};
       periodExpenses.value.forEach(e => { if (!g[e.date]) g[e.date] = []; g[e.date].push(e); });
-      const dates = Object.keys(g).sort((a,b) => b.localeCompare(a));
-      return dates.map(d => ({ date: d, items: g[d], total: calcTotal(g[d]), weekDay: ['日','一','二','三','四','五','六'][parseDate(d).getDay()] }));
+      const dates = Object.keys(g).sort((a, b) => b.localeCompare(a));
+      return dates.map(d => ({ date: d, items: g[d], total: calcTotal(g[d]), weekDay: ['日', '一', '二', '三', '四', '五', '六'][parseDate(d).getDay()] }));
     });
 
     function changePeriod(delta) {
       const d = new Date(currentDate.value);
-      if (currentPeriod.value === 'day') d.setDate(d.getDate()+delta);
-      else if (currentPeriod.value === 'week') d.setDate(d.getDate()+delta*7);
-      else d.setMonth(d.getMonth()+delta);
+      if (currentPeriod.value === 'day') d.setDate(d.getDate() + delta);
+      else if (currentPeriod.value === 'week') d.setDate(d.getDate() + delta * 7);
+      else d.setMonth(d.getMonth() + delta);
       currentDate.value = d;
     }
     function goToToday() { currentDate.value = new Date(); }
@@ -380,9 +380,9 @@ const RecordView = {
     // 长按箭头自动连跳
     function makeAutoRepeat(el, delta) {
       let repeatTimer = null, startTimer = null;
-      function start(e) { e.preventDefault(); changePeriod(delta); startTimer=setTimeout(()=>{repeatTimer=setInterval(()=>changePeriod(delta),150);},400); }
+      function start(e) { e.preventDefault(); changePeriod(delta); startTimer = setTimeout(() => { repeatTimer = setInterval(() => changePeriod(delta), 150); }, 400); }
       function stop() { clearTimeout(startTimer); clearInterval(repeatTimer); }
-      el.addEventListener('mousedown', start); el.addEventListener('touchstart', start, {passive:false});
+      el.addEventListener('mousedown', start); el.addEventListener('touchstart', start, { passive: false });
       el.addEventListener('mouseup', stop); el.addEventListener('mouseleave', stop);
       el.addEventListener('touchend', stop); el.addEventListener('touchcancel', stop);
     }
@@ -398,88 +398,88 @@ const RecordView = {
     function setupCategoryDrag() {
       const content = document.getElementById('content');
       if (!content) return;
-      const drag = { active:false, fromIdx:-1, toIdx:-1, startX:0, startY:0, timer:null, el:null, items:[] };
+      const drag = { active: false, fromIdx: -1, toIdx: -1, startX: 0, startY: 0, timer: null, el: null, items: [] };
 
       function getItems() { return [...document.querySelectorAll('.category-item[data-cat-index]:not([data-cat-index=""])')]; }
-      function getTarget(cx,cy) { let b=drag.fromIdx, d=Infinity; getItems().forEach((it,i)=>{const r=it.getBoundingClientRect();const dst=Math.hypot(cx-(r.left+r.width/2),cy-(r.top+r.height/2));if(dst<d){d=dst;b=i;}});return b; }
-      function activate() { drag.active=true; drag.el.classList.add('drag-active'); drag.items=getItems(); if(navigator.vibrate)navigator.vibrate(10); }
-      function update(cx,cy){const n=getTarget(cx,cy);if(n!==drag.toIdx){drag.toIdx=n;drag.items.forEach((it,i)=>{it.classList.remove('drag-target');if(i===n&&i!==drag.fromIdx)it.classList.add('drag-target');});}}
-      function commit(){if(drag.toIdx>=0&&drag.toIdx!==drag.fromIdx){moveCategory(drag.fromIdx,drag.toIdx);}}
-      function deact(){drag.active=false;drag.fromIdx=-1;drag.toIdx=-1;if(drag.el)drag.el.classList.remove('drag-active');drag.el=null;drag.items.forEach(i=>i.classList.remove('drag-target'));drag.items=[];}
+      function getTarget(cx, cy) { let b = drag.fromIdx, d = Infinity; getItems().forEach((it, i) => { const r = it.getBoundingClientRect(); const dst = Math.hypot(cx - (r.left + r.width / 2), cy - (r.top + r.height / 2)); if (dst < d) { d = dst; b = i; } }); return b; }
+      function activate() { drag.active = true; drag.el.classList.add('drag-active'); drag.items = getItems(); if (navigator.vibrate) navigator.vibrate(10); }
+      function update(cx, cy) { const n = getTarget(cx, cy); if (n !== drag.toIdx) { drag.toIdx = n; drag.items.forEach((it, i) => { it.classList.remove('drag-target'); if (i === n && i !== drag.fromIdx) it.classList.add('drag-target'); }); } }
+      function commit() { if (drag.toIdx >= 0 && drag.toIdx !== drag.fromIdx) { moveCategory(drag.fromIdx, drag.toIdx); } }
+      function deact() { drag.active = false; drag.fromIdx = -1; drag.toIdx = -1; if (drag.el) drag.el.classList.remove('drag-active'); drag.el = null; drag.items.forEach(i => i.classList.remove('drag-target')); drag.items = []; }
 
-      content.addEventListener('touchstart', function(e){
-        if(drag.active)return;const it=e.target.closest('.category-item');if(!it||!it.dataset.catIndex||it.dataset.catIndex==='')return;
-        drag.fromIdx=parseInt(it.dataset.catIndex);drag.toIdx=drag.fromIdx;drag.startX=e.touches[0].clientX;drag.startY=e.touches[0].clientY;drag.el=it;
-        drag.timer=setTimeout(activate,500);
+      content.addEventListener('touchstart', function (e) {
+        if (drag.active) return; const it = e.target.closest('.category-item'); if (!it || !it.dataset.catIndex || it.dataset.catIndex === '') return;
+        drag.fromIdx = parseInt(it.dataset.catIndex); drag.toIdx = drag.fromIdx; drag.startX = e.touches[0].clientX; drag.startY = e.touches[0].clientY; drag.el = it;
+        drag.timer = setTimeout(activate, 500);
       });
-      content.addEventListener('touchmove',function(e){
-        if(!drag.timer&&!drag.active)return;const dx=e.touches[0].clientX-drag.startX,dy=e.touches[0].clientY-drag.startY;
-        if(!drag.active){if(Math.abs(dx)>15||Math.abs(dy)>15){clearTimeout(drag.timer);drag.timer=null;}return;}
-        e.preventDefault();update(e.touches[0].clientX,e.touches[0].clientY);
-      },{passive:false});
-      content.addEventListener('touchend',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active){commit();deact();}});
-      content.addEventListener('touchcancel',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active)deact();});
-      content.addEventListener('mousedown',function(e){
-        if(drag.active)return;const it=e.target.closest('.category-item');if(!it||!it.dataset.catIndex||it.dataset.catIndex==='')return;
-        drag.fromIdx=parseInt(it.dataset.catIndex);drag.toIdx=drag.fromIdx;drag.startX=e.clientX;drag.startY=e.clientY;drag.el=it;
-        drag.timer=setTimeout(activate,500);
+      content.addEventListener('touchmove', function (e) {
+        if (!drag.timer && !drag.active) return; const dx = e.touches[0].clientX - drag.startX, dy = e.touches[0].clientY - drag.startY;
+        if (!drag.active) { if (Math.abs(dx) > 15 || Math.abs(dy) > 15) { clearTimeout(drag.timer); drag.timer = null; } return; }
+        e.preventDefault(); update(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: false });
+      content.addEventListener('touchend', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) { commit(); deact(); } });
+      content.addEventListener('touchcancel', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) deact(); });
+      content.addEventListener('mousedown', function (e) {
+        if (drag.active) return; const it = e.target.closest('.category-item'); if (!it || !it.dataset.catIndex || it.dataset.catIndex === '') return;
+        drag.fromIdx = parseInt(it.dataset.catIndex); drag.toIdx = drag.fromIdx; drag.startX = e.clientX; drag.startY = e.clientY; drag.el = it;
+        drag.timer = setTimeout(activate, 500);
       });
-      document.addEventListener('mousemove',function(e){
-        if(!drag.timer&&!drag.active)return;const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
-        if(!drag.active){if(Math.abs(dx)>15||Math.abs(dy)>15){clearTimeout(drag.timer);drag.timer=null;}return;}
-        e.preventDefault();update(e.clientX,e.clientY);
+      document.addEventListener('mousemove', function (e) {
+        if (!drag.timer && !drag.active) return; const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+        if (!drag.active) { if (Math.abs(dx) > 15 || Math.abs(dy) > 15) { clearTimeout(drag.timer); drag.timer = null; } return; }
+        e.preventDefault(); update(e.clientX, e.clientY);
       });
-      document.addEventListener('mouseup',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active){commit();deact();}});
+      document.addEventListener('mouseup', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) { commit(); deact(); } });
     }
 
     // 支出明细拖拽
     function setupExpenseDrag() {
       const content = document.getElementById('content');
       if (!content) return;
-      const dg = { active:false, fromId:'', toIdx:-1, fromDate:'', startX:0, startY:0, timer:null, el:null, items:[] };
+      const dg = { active: false, fromId: '', toIdx: -1, fromDate: '', startX: 0, startY: 0, timer: null, el: null, items: [] };
 
       function getItems() { return [...document.querySelectorAll('.expense-item')]; }
-      function activate() { dg.active=true; dg.el.classList.add('drag-active'); dg.items=getItems(); if(navigator.vibrate)navigator.vibrate(10); }
-      function update(cy){
-        const items=dg.items;let b=-1;
-        for(let i=0;i<items.length;i++){const r=items[i].getBoundingClientRect();if(cy<r.top+r.height/2){b=i;break;}}
-        if(b<0)b=items.length-1;
-        if(b!==dg.toIdx){dg.toIdx=b;items.forEach(it=>it.classList.remove('drag-target'));const t=items[b];if(t&&t.dataset.expenseId!==dg.fromId&&t.dataset.expenseDate===dg.fromDate)t.classList.add('drag-target');}
+      function activate() { dg.active = true; dg.el.classList.add('drag-active'); dg.items = getItems(); if (navigator.vibrate) navigator.vibrate(10); }
+      function update(cy) {
+        const items = dg.items; let b = -1;
+        for (let i = 0; i < items.length; i++) { const r = items[i].getBoundingClientRect(); if (cy < r.top + r.height / 2) { b = i; break; } }
+        if (b < 0) b = items.length - 1;
+        if (b !== dg.toIdx) { dg.toIdx = b; items.forEach(it => it.classList.remove('drag-target')); const t = items[b]; if (t && t.dataset.expenseId !== dg.fromId && t.dataset.expenseDate === dg.fromDate) t.classList.add('drag-target'); }
       }
-      function commit(){
-        const items=getItems(),t=items[dg.toIdx];
-        if(t&&t.dataset.expenseId!==dg.fromId&&t.dataset.expenseDate===dg.fromDate){swapExpenseOrder(dg.fromId,t.dataset.expenseId);}
+      function commit() {
+        const items = getItems(), t = items[dg.toIdx];
+        if (t && t.dataset.expenseId !== dg.fromId && t.dataset.expenseDate === dg.fromDate) { swapExpenseOrder(dg.fromId, t.dataset.expenseId); }
       }
-      function deact(){dg.active=false;dg.fromId='';dg.toIdx=-1;if(dg.el)dg.el.classList.remove('drag-active');dg.el=null;document.querySelectorAll('.expense-item.drag-target').forEach(i=>i.classList.remove('drag-target'));dg.items=[];}
+      function deact() { dg.active = false; dg.fromId = ''; dg.toIdx = -1; if (dg.el) dg.el.classList.remove('drag-active'); dg.el = null; document.querySelectorAll('.expense-item.drag-target').forEach(i => i.classList.remove('drag-target')); dg.items = []; }
 
-      content.addEventListener('touchstart', function(e){
-        const it=e.target.closest('.expense-item');if(!it||e.target.closest('button'))return;
-        dg.fromId=it.dataset.expenseId;dg.fromDate=it.dataset.expenseDate;dg.toIdx=-1;dg.startY=e.touches[0].clientY;dg.el=it;
-        dg.timer=setTimeout(activate,500);
+      content.addEventListener('touchstart', function (e) {
+        const it = e.target.closest('.expense-item'); if (!it || e.target.closest('button')) return;
+        dg.fromId = it.dataset.expenseId; dg.fromDate = it.dataset.expenseDate; dg.toIdx = -1; dg.startY = e.touches[0].clientY; dg.el = it;
+        dg.timer = setTimeout(activate, 500);
       });
-      content.addEventListener('touchmove',function(e){
-        if(!dg.timer&&!dg.active)return;const dy=Math.abs(e.touches[0].clientY-dg.startY);
-        if(!dg.active){if(dy>15){clearTimeout(dg.timer);dg.timer=null;}return;}
-        e.preventDefault();update(e.touches[0].clientY);
-      },{passive:false});
-      content.addEventListener('touchend',function(){clearTimeout(dg.timer);dg.timer=null;if(dg.active){commit();deact();}});
-      content.addEventListener('touchcancel',function(){clearTimeout(dg.timer);dg.timer=null;if(dg.active)deact();});
-      content.addEventListener('mousedown',function(e){
-        const it=e.target.closest('.expense-item');if(!it||e.target.closest('button'))return;
-        dg.fromId=it.dataset.expenseId;dg.fromDate=it.dataset.expenseDate;dg.toIdx=-1;dg.startY=e.clientY;dg.el=it;
-        dg.timer=setTimeout(activate,500);
+      content.addEventListener('touchmove', function (e) {
+        if (!dg.timer && !dg.active) return; const dy = Math.abs(e.touches[0].clientY - dg.startY);
+        if (!dg.active) { if (dy > 15) { clearTimeout(dg.timer); dg.timer = null; } return; }
+        e.preventDefault(); update(e.touches[0].clientY);
+      }, { passive: false });
+      content.addEventListener('touchend', function () { clearTimeout(dg.timer); dg.timer = null; if (dg.active) { commit(); deact(); } });
+      content.addEventListener('touchcancel', function () { clearTimeout(dg.timer); dg.timer = null; if (dg.active) deact(); });
+      content.addEventListener('mousedown', function (e) {
+        const it = e.target.closest('.expense-item'); if (!it || e.target.closest('button')) return;
+        dg.fromId = it.dataset.expenseId; dg.fromDate = it.dataset.expenseDate; dg.toIdx = -1; dg.startY = e.clientY; dg.el = it;
+        dg.timer = setTimeout(activate, 500);
       });
-      document.addEventListener('mousemove',function(e){
-        if(!dg.timer&&!dg.active)return;const dy=Math.abs(e.clientY-dg.startY);
-        if(!dg.active){if(dy>15){clearTimeout(dg.timer);dg.timer=null;}return;}
-        e.preventDefault();update(e.clientY);
+      document.addEventListener('mousemove', function (e) {
+        if (!dg.timer && !dg.active) return; const dy = Math.abs(e.clientY - dg.startY);
+        if (!dg.active) { if (dy > 15) { clearTimeout(dg.timer); dg.timer = null; } return; }
+        e.preventDefault(); update(e.clientY);
       });
-      document.addEventListener('mouseup',function(){clearTimeout(dg.timer);dg.timer=null;if(dg.active){commit();deact();}});
+      document.addEventListener('mouseup', function () { clearTimeout(dg.timer); dg.timer = null; if (dg.active) { commit(); deact(); } });
     }
 
     function onRecord(catId) { openExpenseModal(catId); }
     function onEditExpense(expId) { openEditExpenseModal(expId); }
-    function onDeleteExpense(expId) { if(confirm('确定要删除这条支出记录吗？')){store.expenses=store.expenses.filter(e=>e.id!=expId);saveExpenses();showToast('已删除');} }
+    function onDeleteExpense(expId) { if (confirm('确定要删除这条支出记录吗？')) { store.expenses = store.expenses.filter(e => e.id != expId); saveExpenses(); showToast('已删除'); } }
 
     return { currentPeriod, currentDate, periodTitle, isToday, groupedExpenses, totalAmount, isOverBudget, periodExpenses, sortedCategories, changePeriod, goToToday, setPeriod, onRecord, onEditExpense, onDeleteExpense, formatMoney, escapeHtml };
   },
@@ -575,36 +575,36 @@ const CategoriesView = {
     function setupListDrag() {
       const content = document.getElementById('content');
       if (!content) return;
-      const drag = { active:false, fromIdx:-1, toIdx:-1, startX:0, startY:0, timer:null, el:null, cards:[] };
+      const drag = { active: false, fromIdx: -1, toIdx: -1, startX: 0, startY: 0, timer: null, el: null, cards: [] };
 
       function getCards() { return [...document.querySelectorAll('.category-card[data-cat-index]:not([data-cat-index=""])')]; }
-      function getTarget(cy){const cards=getCards();for(let i=0;i<cards.length;i++){const r=cards[i].getBoundingClientRect();if(cy<r.top+r.height/2)return i;}return cards.length-1;}
-      function activate(){drag.active=true;drag.el.classList.add('drag-active');drag.cards=getCards();if(navigator.vibrate)navigator.vibrate(10);}
-      function update(cy){const n=getTarget(cy);if(n!==drag.toIdx){drag.toIdx=n;drag.cards.forEach((c,i)=>{c.classList.remove('drag-target');if(i===n&&i!==drag.fromIdx)c.classList.add('drag-target');});}}
-      function commit(){if(drag.toIdx>=0&&drag.toIdx!==drag.fromIdx){moveCategory(drag.fromIdx,drag.toIdx);}}
-      function deact(){drag.active=false;drag.fromIdx=-1;drag.toIdx=-1;if(drag.el)drag.el.classList.remove('drag-active');drag.el=null;drag.cards.forEach(c=>c.classList.remove('drag-target'));drag.cards=[];}
+      function getTarget(cy) { const cards = getCards(); for (let i = 0; i < cards.length; i++) { const r = cards[i].getBoundingClientRect(); if (cy < r.top + r.height / 2) return i; } return cards.length - 1; }
+      function activate() { drag.active = true; drag.el.classList.add('drag-active'); drag.cards = getCards(); if (navigator.vibrate) navigator.vibrate(10); }
+      function update(cy) { const n = getTarget(cy); if (n !== drag.toIdx) { drag.toIdx = n; drag.cards.forEach((c, i) => { c.classList.remove('drag-target'); if (i === n && i !== drag.fromIdx) c.classList.add('drag-target'); }); } }
+      function commit() { if (drag.toIdx >= 0 && drag.toIdx !== drag.fromIdx) { moveCategory(drag.fromIdx, drag.toIdx); } }
+      function deact() { drag.active = false; drag.fromIdx = -1; drag.toIdx = -1; if (drag.el) drag.el.classList.remove('drag-active'); drag.el = null; drag.cards.forEach(c => c.classList.remove('drag-target')); drag.cards = []; }
 
-      content.addEventListener('touchstart',function(e){
-        if(drag.active)return;const card=e.target.closest('.category-card');if(!card||!card.dataset.catIndex||card.dataset.catIndex==='')return;if(e.target.closest('button'))return;
-        drag.fromIdx=parseInt(card.dataset.catIndex);drag.toIdx=drag.fromIdx;drag.startY=e.touches[0].clientY;drag.el=card;drag.timer=setTimeout(activate,500);
+      content.addEventListener('touchstart', function (e) {
+        if (drag.active) return; const card = e.target.closest('.category-card'); if (!card || !card.dataset.catIndex || card.dataset.catIndex === '') return; if (e.target.closest('button')) return;
+        drag.fromIdx = parseInt(card.dataset.catIndex); drag.toIdx = drag.fromIdx; drag.startY = e.touches[0].clientY; drag.el = card; drag.timer = setTimeout(activate, 500);
       });
-      content.addEventListener('touchmove',function(e){
-        if(!drag.timer&&!drag.active)return;const dy=Math.abs(e.touches[0].clientY-drag.startY);
-        if(!drag.active){if(dy>15){clearTimeout(drag.timer);drag.timer=null;}return;}
-        e.preventDefault();update(e.touches[0].clientY);
-      },{passive:false});
-      content.addEventListener('touchend',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active){commit();deact();}});
-      content.addEventListener('touchcancel',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active)deact();});
-      content.addEventListener('mousedown',function(e){
-        if(drag.active)return;const card=e.target.closest('.category-card');if(!card||!card.dataset.catIndex||card.dataset.catIndex==='')return;if(e.target.closest('button'))return;
-        drag.fromIdx=parseInt(card.dataset.catIndex);drag.toIdx=drag.fromIdx;drag.startY=e.clientY;drag.el=card;drag.timer=setTimeout(activate,500);
+      content.addEventListener('touchmove', function (e) {
+        if (!drag.timer && !drag.active) return; const dy = Math.abs(e.touches[0].clientY - drag.startY);
+        if (!drag.active) { if (dy > 15) { clearTimeout(drag.timer); drag.timer = null; } return; }
+        e.preventDefault(); update(e.touches[0].clientY);
+      }, { passive: false });
+      content.addEventListener('touchend', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) { commit(); deact(); } });
+      content.addEventListener('touchcancel', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) deact(); });
+      content.addEventListener('mousedown', function (e) {
+        if (drag.active) return; const card = e.target.closest('.category-card'); if (!card || !card.dataset.catIndex || card.dataset.catIndex === '') return; if (e.target.closest('button')) return;
+        drag.fromIdx = parseInt(card.dataset.catIndex); drag.toIdx = drag.fromIdx; drag.startY = e.clientY; drag.el = card; drag.timer = setTimeout(activate, 500);
       });
-      document.addEventListener('mousemove',function(e){
-        if(!drag.timer&&!drag.active)return;const dy=Math.abs(e.clientY-drag.startY);
-        if(!drag.active){if(dy>15){clearTimeout(drag.timer);drag.timer=null;}return;}
-        e.preventDefault();update(e.clientY);
+      document.addEventListener('mousemove', function (e) {
+        if (!drag.timer && !drag.active) return; const dy = Math.abs(e.clientY - drag.startY);
+        if (!drag.active) { if (dy > 15) { clearTimeout(drag.timer); drag.timer = null; } return; }
+        e.preventDefault(); update(e.clientY);
       });
-      document.addEventListener('mouseup',function(){clearTimeout(drag.timer);drag.timer=null;if(drag.active){commit();deact();}});
+      document.addEventListener('mouseup', function () { clearTimeout(drag.timer); drag.timer = null; if (drag.active) { commit(); deact(); } });
     }
 
     return { sortedCategories, onEdit, onDelete, onAdd, catCount };
