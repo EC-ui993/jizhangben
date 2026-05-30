@@ -427,8 +427,8 @@
       // 长按拖拽（网格）
       content.addEventListener('touchstart', function(e) {
         if (drag.active) return;
-        const item = e.target.closest('.category-item[data-cat-index]:not([data-cat-index=""])');
-        if (!item) return;
+        const item = e.target.closest('.category-item');
+        if (!item || !item.dataset.catIndex || item.dataset.catIndex === '') return;
 
         drag.fromIdx = parseInt(item.dataset.catIndex);
         drag.toIdx = drag.fromIdx;
@@ -437,7 +437,7 @@
         drag.el = item;
 
         drag.timer = setTimeout(() => activateGridDrag(), 500);
-      }, { passive: false });
+      });
 
       content.addEventListener('touchmove', function(e) {
         if (!drag.timer && !drag.active) return;
@@ -445,7 +445,7 @@
         const dy = e.touches[0].clientY - drag.startY;
 
         if (!drag.active) {
-          if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
             clearTimeout(drag.timer);
             drag.timer = null;
           }

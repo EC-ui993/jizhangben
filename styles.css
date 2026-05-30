@@ -181,6 +181,14 @@ body {
   background: var(--primary-light);
 }
 
+/* 禁止浏览器长按弹出菜单（为自定义拖拽让路） */
+.category-item,
+.category-card {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .category-emoji { font-size: 28px; line-height: 1; }
 .category-name {
   font-size: 12px;

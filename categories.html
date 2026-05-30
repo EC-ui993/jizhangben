@@ -264,8 +264,8 @@
       // 长按拖拽
       content.addEventListener('touchstart', function(e) {
         if (drag.active) return;
-        const card = e.target.closest('.category-card[data-cat-index]:not([data-cat-index=""])');
-        if (!card) return;
+        const card = e.target.closest('.category-card');
+        if (!card || !card.dataset.catIndex || card.dataset.catIndex === '') return;
         // 排除按钮点击
         if (e.target.closest('button')) return;
 
@@ -276,7 +276,7 @@
         drag.el = card;
 
         drag.timer = setTimeout(() => activateDrag(), 500);
-      }, { passive: false });
+      });
 
       content.addEventListener('touchmove', function(e) {
         if (!drag.timer && !drag.active) return;
@@ -284,7 +284,7 @@
         const dy = e.touches[0].clientY - drag.startY;
 
         if (!drag.active) {
-          if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
             clearTimeout(drag.timer);
             drag.timer = null;
           }
