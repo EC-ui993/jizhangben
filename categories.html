@@ -310,6 +310,48 @@
         if (drag.active) deactivateDrag();
       });
 
+      // 鼠标拖拽（桌面端）
+      content.addEventListener('mousedown', function(e) {
+        if (drag.active) return;
+        const card = e.target.closest('.category-card');
+        if (!card || !card.dataset.catIndex || card.dataset.catIndex === '') return;
+        if (e.target.closest('button')) return;
+
+        drag.fromIdx = parseInt(card.dataset.catIndex);
+        drag.toIdx = drag.fromIdx;
+        drag.startX = e.clientX;
+        drag.startY = e.clientY;
+        drag.el = card;
+
+        drag.timer = setTimeout(() => activateDrag(), 500);
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!drag.timer && !drag.active) return;
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+
+        if (!drag.active) {
+          if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+            clearTimeout(drag.timer);
+            drag.timer = null;
+          }
+          return;
+        }
+
+        e.preventDefault();
+        updateDragPosition(e.clientY);
+      });
+
+      document.addEventListener('mouseup', function(e) {
+        clearTimeout(drag.timer);
+        drag.timer = null;
+        if (drag.active) {
+          commitReorder();
+          deactivateDrag();
+        }
+      });
+
       // 内容区点击事件委托（拖拽后不触发点击）
       content.addEventListener('click', (e) => {
         if (drag._justDragged) { drag._justDragged = false; return; }

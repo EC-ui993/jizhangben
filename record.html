@@ -471,6 +471,47 @@
         if (drag.active) deactivateGridDrag();
       });
 
+      // 鼠标拖拽（桌面端）
+      content.addEventListener('mousedown', function(e) {
+        if (drag.active) return;
+        const item = e.target.closest('.category-item');
+        if (!item || !item.dataset.catIndex || item.dataset.catIndex === '') return;
+
+        drag.fromIdx = parseInt(item.dataset.catIndex);
+        drag.toIdx = drag.fromIdx;
+        drag.startX = e.clientX;
+        drag.startY = e.clientY;
+        drag.el = item;
+
+        drag.timer = setTimeout(() => activateGridDrag(), 500);
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!drag.timer && !drag.active) return;
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+
+        if (!drag.active) {
+          if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+            clearTimeout(drag.timer);
+            drag.timer = null;
+          }
+          return;
+        }
+
+        e.preventDefault();
+        updateGridPosition(e.clientX, e.clientY);
+      });
+
+      document.addEventListener('mouseup', function(e) {
+        clearTimeout(drag.timer);
+        drag.timer = null;
+        if (drag.active) {
+          commitGridReorder();
+          deactivateGridDrag();
+        }
+      });
+
       // 内容区事件委托
       content.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
