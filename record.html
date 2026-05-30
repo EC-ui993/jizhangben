@@ -422,10 +422,39 @@
       renderPage();
 
       // 顶部导航
-      document.getElementById('btnPrev').addEventListener('click', () => changePeriod(-1));
-      document.getElementById('btnNext').addEventListener('click', () => changePeriod(1));
       document.getElementById('btnToday').addEventListener('click', goToToday);
       document.getElementById('periodTitle').addEventListener('click', goToToday);
+
+      // 箭头：长按持续跳转
+      function makeAutoRepeat(el, delta) {
+        let repeatTimer = null, startTimer = null;
+
+        function startRepeat(e) {
+          e.preventDefault();
+          changePeriod(delta);
+          // 先等 400ms，然后每 150ms 跳一次
+          startTimer = setTimeout(() => {
+            repeatTimer = setInterval(() => changePeriod(delta), 150);
+          }, 400);
+        }
+
+        function stopRepeat() {
+          clearTimeout(startTimer);
+          clearInterval(repeatTimer);
+          startTimer = null;
+          repeatTimer = null;
+        }
+
+        el.addEventListener('mousedown', startRepeat);
+        el.addEventListener('touchstart', startRepeat, { passive: false });
+        el.addEventListener('mouseup', stopRepeat);
+        el.addEventListener('mouseleave', stopRepeat);
+        el.addEventListener('touchend', stopRepeat);
+        el.addEventListener('touchcancel', stopRepeat);
+      }
+
+      makeAutoRepeat(document.getElementById('btnPrev'), -1);
+      makeAutoRepeat(document.getElementById('btnNext'), 1);
 
       document.querySelectorAll('.period-tab').forEach(btn => {
         btn.addEventListener('click', () => setPeriod(btn.dataset.period));
