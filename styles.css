@@ -620,19 +620,22 @@ body {
 
 /* ========== 拖拽排序 ========== */
 .category-card.dragging,
-.category-item.dragging {
+.category-item.dragging,
+.expense-item.dragging {
   opacity: 0.5;
 }
 
 .category-card.drag-active,
-.category-item.drag-active {
+.category-item.drag-active,
+.expense-item.drag-active {
   opacity: 1;
-  transform: scale(1.06);
+  transform: scale(1.04);
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   z-index: 20;
   position: relative;
   background: var(--primary-light);
   border-color: var(--primary);
+  border-radius: var(--radius-sm);
 }
 
 .category-card.drag-target::before,
@@ -640,6 +643,13 @@ body {
   outline: 2px dashed var(--primary);
   outline-offset: 2px;
   border-radius: var(--radius);
+}
+
+.expense-item.drag-target {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
 }
 
 /* 拖拽中的占位空档 */
