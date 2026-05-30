@@ -84,10 +84,11 @@
       if (categories.length === 0) {
         html += '<div class="empty-state"><div class="icon">📭</div><div class="text">还没有分类，点击下方按钮添加</div></div>';
       } else {
-        getSortedCategories().forEach(cat => {
+        getSortedCategories().forEach((cat, index) => {
           const count = expenses.filter(e => e.categoryId == cat.id).length;
+          const isOthers = cat.name === '其他';
           html += `
-            <div class="category-card">
+            <div class="category-card" data-cat-index="${isOthers ? '' : index}" data-category-id="${cat.id}">
               <span class="cat-emoji">${cat.emoji}</span>
               <div class="cat-info">
                 <div class="cat-name">${cat.name}</div>
@@ -190,14 +191,128 @@
       showToast('分类已删除');
     }
 
+    // ---- 拖拽排序 ----
+
+    const drag = {
+      active: false, fromIdx: -1, toIdx: -1,
+      startX: 0, startY: 0, currentY: 0,
+      timer: null, el: null, clone: null, cards: [],
+    };
+
+    function getCardElements() {
+      return [...document.querySelectorAll('.category-card[data-cat-index]:not([data-cat-index=""])')];
+    }
+
+    function getTargetIndex(clientY) {
+      const cards = getCardElements();
+      for (let i = 0; i < cards.length; i++) {
+        const r = cards[i].getBoundingClientRect();
+        if (clientY < r.top + r.height / 2) return i;
+      }
+      return cards.length - 1;
+    }
+
+    function activateDrag() {
+      drag.active = true;
+      drag.el.classList.add('drag-active');
+      drag.cards = getCardElements();
+      // 触觉反馈
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+
+    function updateDragPosition(clientY) {
+      drag.currentY = clientY;
+      const newIdx = getTargetIndex(clientY);
+      if (newIdx !== drag.toIdx) {
+        drag.toIdx = newIdx;
+        // 更新所有卡片的视觉状态
+        drag.cards.forEach((card, i) => {
+          card.classList.remove('drag-target');
+          if (i === newIdx && i !== drag.fromIdx) {
+            card.classList.add('drag-target');
+          }
+        });
+      }
+    }
+
+    function commitReorder() {
+      if (drag.toIdx >= 0 && drag.toIdx !== drag.fromIdx) {
+        moveCategory(drag.fromIdx, drag.toIdx);
+        renderPage();
+        showToast('顺序已调整 ✓');
+      }
+    }
+
+    function deactivateDrag() {
+      drag.active = false;
+      drag.fromIdx = -1;
+      drag.toIdx = -1;
+      if (drag.el) drag.el.classList.remove('drag-active');
+      drag.el = null;
+      drag.cards.forEach(c => c.classList.remove('drag-target'));
+      drag.cards = [];
+    }
+
     // ---- 事件绑定 ----
 
     function init() {
       loadData();
       renderPage();
 
-      // 内容区事件委托
-      document.getElementById('content').addEventListener('click', (e) => {
+      const content = document.getElementById('content');
+
+      // 长按拖拽
+      content.addEventListener('touchstart', function(e) {
+        if (drag.active) return;
+        const card = e.target.closest('.category-card[data-cat-index]:not([data-cat-index=""])');
+        if (!card) return;
+        // 排除按钮点击
+        if (e.target.closest('button')) return;
+
+        drag.fromIdx = parseInt(card.dataset.catIndex);
+        drag.toIdx = drag.fromIdx;
+        drag.startX = e.touches[0].clientX;
+        drag.startY = e.touches[0].clientY;
+        drag.el = card;
+
+        drag.timer = setTimeout(() => activateDrag(), 500);
+      }, { passive: false });
+
+      content.addEventListener('touchmove', function(e) {
+        if (!drag.timer && !drag.active) return;
+        const dx = e.touches[0].clientX - drag.startX;
+        const dy = e.touches[0].clientY - drag.startY;
+
+        if (!drag.active) {
+          if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+            clearTimeout(drag.timer);
+            drag.timer = null;
+          }
+          return;
+        }
+
+        e.preventDefault();
+        updateDragPosition(e.touches[0].clientY);
+      }, { passive: false });
+
+      content.addEventListener('touchend', function(e) {
+        clearTimeout(drag.timer);
+        drag.timer = null;
+        if (drag.active) {
+          commitReorder();
+          deactivateDrag();
+        }
+      });
+
+      content.addEventListener('touchcancel', function(e) {
+        clearTimeout(drag.timer);
+        drag.timer = null;
+        if (drag.active) deactivateDrag();
+      });
+
+      // 内容区点击事件委托（拖拽后不触发点击）
+      content.addEventListener('click', (e) => {
+        if (drag._justDragged) { drag._justDragged = false; return; }
         const target = e.target.closest('[data-action]');
         if (!target) return;
         const action = target.dataset.action;

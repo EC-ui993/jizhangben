@@ -103,6 +103,19 @@ function insertCategoryBeforeOthers(cat) {
   }
 }
 
+/** 移动分类（使用 display index，"其他"始终在最后不参与排序） */
+function moveCategory(displayFromIndex, displayToIndex) {
+  const others = categories.filter(c => c.name === '其他');
+  const rest = categories.filter(c => c.name !== '其他');
+  if (displayFromIndex < 0 || displayFromIndex >= rest.length) return;
+  if (displayToIndex < 0 || displayToIndex >= rest.length) return;
+  const [moved] = rest.splice(displayFromIndex, 1);
+  rest.splice(displayToIndex, 0, moved);
+  categories.length = 0;
+  categories.push(...rest, ...others);
+  saveCategories();
+}
+
 // ---- 日期工具 ----
 
 /** 格式化日期为 YYYY-MM-DD 字符串 */

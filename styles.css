@@ -599,6 +599,35 @@ body {
   margin-top: 8px;
 }
 
+/* ========== 拖拽排序 ========== */
+.category-card.dragging,
+.category-item.dragging {
+  opacity: 0.5;
+}
+
+.category-card.drag-active,
+.category-item.drag-active {
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 20;
+  position: relative;
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.category-card.drag-target::before,
+.category-item.drag-target {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* 拖拽中的占位空档 */
+.category-card.drag-gap-top { margin-top: 60px; }
+.category-card.drag-gap-bottom { margin-bottom: 60px; }
+.category-item.drag-gap { background: var(--primary-light); }
+
 /* ========== Toast 提示 ========== */
 .toast {
   position: fixed;
