@@ -86,6 +86,23 @@ function findCategory(id) {
   return categories.find(c => c.id == id);
 }
 
+/** 获取分类列表（"其他"始终排在最后） */
+function getSortedCategories() {
+  const others = categories.filter(c => c.name === '其他');
+  const rest = categories.filter(c => c.name !== '其他');
+  return [...rest, ...others];
+}
+
+/** 在"其他"之前插入新分类，没有"其他"则追加到末尾 */
+function insertCategoryBeforeOthers(cat) {
+  const otherIndex = categories.findIndex(c => c.name === '其他');
+  if (otherIndex >= 0) {
+    categories.splice(otherIndex, 0, cat);
+  } else {
+    categories.push(cat);
+  }
+}
+
 // ---- 日期工具 ----
 
 /** 格式化日期为 YYYY-MM-DD 字符串 */

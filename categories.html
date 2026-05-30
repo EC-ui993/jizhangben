@@ -84,7 +84,7 @@
       if (categories.length === 0) {
         html += '<div class="empty-state"><div class="icon">📭</div><div class="text">还没有分类，点击下方按钮添加</div></div>';
       } else {
-        categories.forEach(cat => {
+        getSortedCategories().forEach(cat => {
           const count = expenses.filter(e => e.categoryId == cat.id).length;
           html += `
             <div class="category-card">
@@ -157,7 +157,7 @@
           saveExpenses();
         }
       } else {
-        categories.push({
+        insertCategoryBeforeOthers({
           id: generateId(),
           name: name,
           emoji: emoji,

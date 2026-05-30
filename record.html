@@ -190,7 +190,7 @@
       html += '<div class="category-section">';
       html += '<div class="section-title">💡 点击分类快速记账</div>';
       html += '<div class="category-grid">';
-      categories.forEach(cat => {
+      getSortedCategories().forEach(cat => {
         html += `
           <div class="category-item" data-action="record" data-category-id="${cat.id}">
             <span class="category-emoji">${cat.emoji}</span>
