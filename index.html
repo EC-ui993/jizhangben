@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💰 记账本</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+</head>
+<body>
+  <div id="app">
+    <div class="app-container">
+      <router-view></router-view>
+      <bottom-nav></bottom-nav>
+    </div>
+    <expense-modal v-if="modals.expense.show" :category-id="modals.expense.categoryId" :expense-id="modals.expense.expenseId" @close="closeExpenseModal"></expense-modal>
+    <category-modal v-if="modals.category.show" :category-id="modals.category.categoryId" @close="closeCategoryModal"></category-modal>
+    <div class="toast" :class="{ show: toastMsg }" v-text="toastMsg"></div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

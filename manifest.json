@@ -2,7 +2,7 @@
   "name": "记账本",
   "short_name": "记账本",
   "description": "一个简单实用的个人记账工具",
-  "start_url": "/jizhangben/record.html",
+  "start_url": "/jizhangben/",
   "scope": "/jizhangben/",
   "display": "standalone",
   "orientation": "portrait",
