@@ -147,7 +147,7 @@ body {
   justify-content: space-between;
   padding: 12px;
   background: var(--card);
-  margin: 8px 12px;
+  margin: 8px 0;
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
@@ -176,13 +176,13 @@ body {
 .content {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
-  /* 给底部导航栏留空间 */
+  padding: 0 12px 80px;
+  /* 底部留空给导航栏 */
 }
 
 /* ========== 分类网格（用于快速记账） ========== */
 .category-section {
-  padding: 4px 12px;
+  padding: 4px 0;
 }
 
 .section-title {
@@ -246,7 +246,7 @@ body {
 
 /* ========== 支出明细列表 ========== */
 .expense-section {
-  padding: 4px 12px;
+  padding: 4px 0;
 }
 
 .date-group-header {
@@ -360,7 +360,7 @@ body {
 
 /* ========== 项目管理页面样式 ========== */
 .category-list {
-  padding: 8px 12px;
+  padding: 8px 0;
 }
 
 .category-card {
@@ -447,7 +447,7 @@ body {
 
 /* ========== 设置页面样式 ========== */
 .settings-section {
-  padding: 8px 12px;
+  padding: 8px 0;
 }
 
 .setting-card {
